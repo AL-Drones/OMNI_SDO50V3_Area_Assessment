@@ -1,9 +1,0 @@
-streamlit
-geopandas
-simplekml
-matplotlib
-contextily
-requests
-folium
-streamlit-folium
-Pillow
