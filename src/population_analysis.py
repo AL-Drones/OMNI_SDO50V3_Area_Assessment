@@ -214,10 +214,12 @@ def criar_legenda_areas(layers_poligonos, layers_para_mostrar, buffer_info=None)
 
 
 def criar_colormap_melhorado():
-    """Create an improved colormap from light green to yellow to red."""
-    # Colormap que vai de verde claro → amarelo → laranja → vermelho
-    colors = ['#E8F5E9', '#C8E6C9', '#A5D6A7', '#81C784', '#66BB6A',
-              '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#D32F2F']
+    """Create an improved colormap from white to yellow to red."""
+    # Colormap que vai de branco → amarelo → laranja → vermelho
+    colors = ['#FFFFFF', '#FFF9E6', '#FFF3CC', '#FFECB3', '#FFE599',
+              '#FFDB80', '#FFD166', '#FFC14D', '#FFB133', '#FFA31A',
+              '#FF9500', '#FF8700', '#FF7A00', '#FF6D00', '#FF5500',
+              '#FF3D00', '#FF2500', '#FF0D00', '#E60000', '#CC0000']
     n_bins = 100
     cmap = LinearSegmentedColormap.from_list('population', colors, N=n_bins)
     return cmap
