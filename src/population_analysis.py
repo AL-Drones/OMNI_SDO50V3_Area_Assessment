@@ -214,10 +214,10 @@ def criar_legenda_areas(layers_poligonos, layers_para_mostrar, buffer_info=None)
 
 
 def criar_colormap_melhorado():
-    """Create an improved colormap from green to yellow to red."""
-    # Colormap que vai de verde → amarelo → laranja → vermelho
-    colors = ['#00FF00', '#7FFF00', '#FFFF00', '#FFD700', '#FFA500', 
-              '#FF8C00', '#FF6347', '#FF4500', '#FF0000', '#8B0000']
+    """Create an improved colormap from light green to yellow to red."""
+    # Colormap que vai de verde claro → amarelo → laranja → vermelho
+    colors = ['#E8F5E9', '#C8E6C9', '#A5D6A7', '#81C784', '#66BB6A',
+              '#FFEB3B', '#FFC107', '#FF9800', '#FF5722', '#D32F2F']
     n_bins = 100
     cmap = LinearSegmentedColormap.from_list('population', colors, N=n_bins)
     return cmap
@@ -364,26 +364,27 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
         ax.legend(
             handles=legend_elements,
             loc='upper left',
-            fontsize=11,
+            fontsize=14,  # Aumentado de 11 para 14
             framealpha=0.95,
             edgecolor='black',
             title='Áreas Analisadas',
-            title_fontsize=12
+            title_fontsize=15  # Aumentado de 12 para 15
         )
     
-    ax.set_title(titulo, fontsize=20, fontweight='bold', pad=20)
-    ax.set_xlabel("Longitude [°]", fontsize=14, fontweight='bold')
-    ax.set_ylabel("Latitude [°]", fontsize=14, fontweight='bold')
+    ax.set_title(titulo, fontsize=24, fontweight='bold', pad=20)  # Aumentado de 20 para 24
+    ax.set_xlabel("Longitude [°]", fontsize=16, fontweight='bold')  # Aumentado de 14 para 16
+    ax.set_ylabel("Latitude [°]", fontsize=16, fontweight='bold')  # Aumentado de 14 para 16
     
-    # Add basemap with appropriate zoom
+    # Add basemap with appropriate zoom and higher quality
     zoom_level = determinar_zoom_adequado(area_analise_km2)
     try:
+        # Use higher zoom for better resolution
         cx.add_basemap(
             ax,
             crs=dados_combinados.crs.to_string(),
             source=cx.providers.OpenStreetMap.Mapnik,
             alpha=0.5,
-            zoom=zoom_level
+            zoom=zoom_level + 1  # +1 para maior resolução
         )
     except Exception as e:
         print(f"⚠ Could not add basemap: {e}")
@@ -403,7 +404,7 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
         0.02, 0.02,
         info_texto,
         transform=ax.transAxes,
-        fontsize=11,
+        fontsize=13,  # Aumentado de 11 para 13
         verticalalignment='bottom',
         bbox=dict(
             facecolor='white', 
@@ -416,7 +417,7 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     
     # Improve grid
     ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
-    ax.tick_params(labelsize=11)
+    ax.tick_params(labelsize=12)  # Aumentado de 11 para 12
     
     plt.tight_layout()
     
