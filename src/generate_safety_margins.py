@@ -77,6 +77,7 @@ def generate_safety_margins(
     
     # Set join style for corners
     join_style = 2 if corner_style == 'square' else 1
+    cap_style = 3 if corner_style == 'square' else 1
     
     # Calculate Ground Risk Buffer size if not provided
     if grb_size is None:
@@ -107,7 +108,7 @@ def generate_safety_margins(
         layer = gdf.copy()
         if buffer_size > 0:
             # Use flat cap for Flight Geography points, round cap for others
-            cap_style = 3 if name == 'Flight Geography' and not has_polygon else 1
+            # cap_style = 3 if name == 'Flight Geography' and not has_polygon else 1
             layer["geometry"] = gdf.geometry.buffer(
                 buffer_size,
                 cap_style=cap_style,
