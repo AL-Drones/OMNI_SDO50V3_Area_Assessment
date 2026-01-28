@@ -337,7 +337,7 @@ def analyze_population(kml_file, output_dir='results'):
     # Plot 1 — Flight Geography
     stats = processar_todas_grades(
         area_geom=layers_poligonos['Flight Geography'],
-        titulo="Population Density - Flight Geography",
+        titulo="Densidade Populacional - Geografia de Voo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography'],
         output_path=os.path.join(output_dir, 'map_flight_geography.png')
@@ -348,7 +348,7 @@ def analyze_population(kml_file, output_dir='results'):
     # Plot 2 — Ground Risk Buffer
     stats = processar_todas_grades(
         area_geom=layers_poligonos['Ground Risk Buffer'],
-        titulo="Population Density - Ground Risk Buffer",
+        titulo="Densidade Populacional - Distância de Segurança no Solo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer'],
         output_path=os.path.join(output_dir, 'map_ground_risk_buffer.png')
@@ -362,7 +362,7 @@ def analyze_population(kml_file, output_dir='results'):
         area_anel = layers_poligonos['Adjacent Area'].difference(layers_poligonos['Ground Risk Buffer'])
         stats = processar_todas_grades(
             area_geom=area_anel,
-            titulo="Population Density - Adjacent Area",
+            titulo="Densidade Populacional - Área Adjacente (SDO 50 V3)",
             layers_poligonos=layers_poligonos,
             layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer', 'Adjacent Area'],
             output_path=os.path.join(output_dir, 'map_adjacent_area.png')
