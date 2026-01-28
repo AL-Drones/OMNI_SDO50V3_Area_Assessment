@@ -76,7 +76,7 @@ def generate_safety_margins(
         fg_size = 0
     
     # Set join style for corners
-    join_style = 1 if corner_style == 'square' else 1
+    join_style = 3 if corner_style == 'square' else 1
     
     # Calculate Ground Risk Buffer size if not provided
     if grb_size is None:
