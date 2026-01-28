@@ -7,10 +7,20 @@ import os
 import tempfile
 from pathlib import Path
 import geopandas as gpd
+import pandas as pd
 
 # Import from src folder
 from src import generate_safety_margins as gsm
 from src import population_analysis as pa
+
+
+# Mapeamento de nomes para português
+NAMES_PT = {
+    'Flight Geography': 'Geografia de Voo',
+    'Contingency Volume': 'Volume de Contingência',
+    'Ground Risk Buffer': 'Buffer de Risco no Solo',
+    'Adjacent Area': 'Área Adjacente'
+}
 
 
 # Page configuration
@@ -365,12 +375,12 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
             with col2:
-                if st.button("✏️", key="edit_step1", type="secondary", help="Editar KML"):
+                if st.button("Editar", key="edit_step1", type="secondary", help="Editar KML"):
                     st.session_state['kml_uploaded'] = False
                     st.session_state['current_step'] = 1
                     st.rerun()
         else:
-            st.markdown("### 📤 Etapa 1: Upload do KML")
+            st.markdown("### Etapa 1: Upload do KML")
             uploaded_file = st.file_uploader(
                 "Selecione o arquivo KML de entrada",
                 type=['kml'],
@@ -382,7 +392,7 @@ def main():
                 st.session_state['uploaded_file'] = uploaded_file
                 st.session_state['kml_filename'] = uploaded_file.name
                 
-                if st.button("➡️ Próximo: Configurar Parâmetros", type="primary"):
+                if st.button("Próximo: Configurar Parâmetros", type="primary"):
                     st.session_state['kml_uploaded'] = True
                     st.session_state['current_step'] = 2
                     st.rerun()
@@ -399,14 +409,14 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
             with col2:
-                if st.button("✏️", key="edit_step2", type="secondary", help="Editar parâmetros"):
+                if st.button("Editar", key="edit_step2", type="secondary", help="Editar parâmetros"):
                     st.session_state['parameters_set'] = False
                     st.session_state['current_step'] = 2
                     if 'analysis_results' in st.session_state:
                         del st.session_state['analysis_results']
                     st.rerun()
         else:
-            st.markdown("### ⚙️ Etapa 2: Configuração dos Parâmetros")
+            st.markdown("### Etapa 2: Configuração dos Parâmetros")
             
             # Read geometry to check type
             uploaded_file = st.session_state.get('uploaded_file')
@@ -434,7 +444,7 @@ def main():
                 
                 if has_point_or_line and not has_polygon:
                     fg_size = st.number_input(
-                        "Flight Geography Buffer (m)",
+                        "Buffer da Geografia de Voo (m)",
                         min_value=0.0,
                         value=50.0,
                         step=10.0,
@@ -442,7 +452,7 @@ def main():
                     )
                 else:
                     fg_size = 0.0
-                    st.info("📍 Geometria detectada: Polígono (Flight Geography já definido)")
+                    st.info("Geometria detectada: Polígono (Geografia de Voo já definida)")
                 
                 height = st.number_input(
                     "Altura de Voo (m)",
@@ -455,7 +465,7 @@ def main():
             with col2:
                 st.markdown("#### Parâmetros de Buffer")
                 cv_size = st.number_input(
-                    "Contingency Volume (m)",
+                    "Volume de Contingência (m)",
                     min_value=215.0,
                     value=215.0,
                     step=10.0,
@@ -465,7 +475,7 @@ def main():
                 # Calculate minimum GRB based on height
                 grb_minimum = gsm.calculate_grb_size(height)
                 grb_size = st.number_input(
-                    "Ground Risk Buffer (m)",
+                    "Buffer de Risco no Solo (m)",
                     min_value=grb_minimum,
                     value=grb_minimum,
                     step=10.0,
@@ -479,9 +489,9 @@ def main():
                     help="Estilo dos cantos dos buffers"
                 )
             
-            st.info(f"Adjacent Area: 5000m")
+            st.info(f"Área Adjacente: 5000m")
             
-            if st.button("🚀 Iniciar Análise", type="primary"):
+            if st.button("Iniciar Análise", type="primary"):
                 # Store parameters
                 st.session_state['fg_size'] = fg_size
                 st.session_state['height'] = height
@@ -495,7 +505,7 @@ def main():
     # STEP 3: Run Analysis
     if st.session_state['current_step'] >= 3 and st.session_state['parameters_set']:
         if 'analysis_results' not in st.session_state:
-            st.markdown("### 📊 Etapa 3: Processamento")
+            st.markdown("### Etapa 3: Processamento")
             
             progress_bar = st.progress(0)
             status_text = st.empty()
@@ -509,7 +519,7 @@ def main():
                 corner_style = st.session_state.get('corner_style')
                 
                 # ETAPA 1: Gerar Margens de Segurança
-                status_text.markdown('<div class="step-indicator">📍 Gerando margens de segurança...</div>', unsafe_allow_html=True)
+                status_text.markdown('<div class="step-indicator">Gerando margens de segurança...</div>', unsafe_allow_html=True)
                 progress_bar.progress(10)
                 
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.kml') as tmp_input:
@@ -535,7 +545,7 @@ def main():
                     kml_data = f.read()
                 
                 # ETAPA 2: Análise Populacional
-                status_text.markdown('<div class="step-indicator">📊 Analisando densidade populacional...</div>', unsafe_allow_html=True)
+                status_text.markdown('<div class="step-indicator">Analisando densidade populacional...</div>', unsafe_allow_html=True)
                 progress_bar.progress(40)
                 
                 analysis_output_dir = os.path.join(output_dir, 'analysis_results')
@@ -567,7 +577,7 @@ def main():
                     }
                     st.rerun()
                 else:
-                    st.warning("⚠️ Nenhum resultado foi gerado.")
+                    st.warning("Nenhum resultado foi gerado.")
                 
                 if os.path.exists(tmp_input_path):
                     os.unlink(tmp_input_path)
@@ -575,7 +585,7 @@ def main():
             except Exception as e:
                 progress_bar.empty()
                 status_text.empty()
-                st.error(f"❌ Erro durante o processamento: {str(e)}")
+                st.error(f"Erro durante o processamento: {str(e)}")
                 import traceback
                 with st.expander("Ver detalhes do erro"):
                     st.code(traceback.format_exc())
@@ -586,16 +596,18 @@ def main():
             analysis_output_dir = st.session_state['analysis_results']['output_dir']
             kml_data = st.session_state['analysis_results']['kml_data']
             
-            st.success("✅ Análise concluída com sucesso!")
+            st.success("Análise concluída com sucesso!")
             
             st.markdown("---")
-            st.markdown("## 📈 Resultados da Análise")
+            st.markdown("## Resultados da Análise")
             
             # Create metrics with color coding
             cols = st.columns(len(results))
             show_warning = False  # Flag to show warning below results
             
             for idx, (layer_name, stats) in enumerate(results.items()):
+                layer_name_pt = NAMES_PT.get(layer_name, layer_name)
+                
                 with cols[idx]:
                     if layer_name in ['Flight Geography', 'Ground Risk Buffer']:
                         densidade = stats['densidade_maxima']
@@ -612,9 +624,9 @@ def main():
                     if densidade > threshold:
                         st.markdown(f"""
                         <div style="background: rgba(255, 0, 0, 0.1); padding: 1rem; border-radius: 5px; border-left: 4px solid #ff0000;">
-                            <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0;">{layer_name}</p>
+                            <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0;">{layer_name_pt}</p>
                             <p style="color: #ff0000; font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">
-                                ⚠️ {densidade:.1f} <span style="color: #ff6666; font-size: 1.2rem; font-weight: 600;">hab/km²</span>
+                                {densidade:.1f} <span style="color: #ff6666; font-size: 1.2rem; font-weight: 600;">hab/km²</span>
                             </p>
                             <p style="color: #aaa; font-size: 0.8rem; margin: 0;">Densidade {density_label}</p>
                         </div>
@@ -622,9 +634,9 @@ def main():
                     else:
                         st.markdown(f"""
                         <div style="background: rgba(0, 255, 0, 0.05); padding: 1rem; border-radius: 5px; border-left: 4px solid #00ff00;">
-                            <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0;">{layer_name}</p>
+                            <p style="color: #ffffff; font-size: 1.1rem; font-weight: 600; margin: 0;">{layer_name_pt}</p>
                             <p style="color: #00ff00; font-size: 2.5rem; font-weight: bold; margin: 0.5rem 0;">
-                                ✓ {densidade:.1f} <span style="color: #66ff66; font-size: 1.2rem; font-weight: 600;">hab/km²</span>
+                                {densidade:.1f} <span style="color: #66ff66; font-size: 1.2rem; font-weight: 600;">hab/km²</span>
                             </p>
                             <p style="color: #aaa; font-size: 0.8rem; margin: 0;">Densidade {density_label}</p>
                         </div>
@@ -638,7 +650,7 @@ def main():
             if show_warning:
                 st.markdown("""
                 <div style="background: rgba(255, 165, 0, 0.1); padding: 1rem; border-radius: 5px; border-left: 4px solid #FFA500; margin-top: 1rem;">
-                    <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">⚠️ Atenção: Restrições de Sobrevoo</p>
+                    <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">Atenção: Restrições de Sobrevoo</p>
                     <p style="color: #e0e0e0; font-size: 0.9rem; margin: 0; line-height: 1.5;">
                         O voo sobre <strong>não anuentes é proibido</strong>. A trajetória de voo deve estar <strong>completamente contida</strong> 
                         na Geografia de Voo e <strong>não pode sobrevoar terceiros</strong>.
@@ -648,12 +660,12 @@ def main():
             
             # Detailed statistics table
             st.markdown("---")
-            with st.expander("📋 Estatísticas Detalhadas", expanded=False):
-                import pandas as pd
+            with st.expander("Estatísticas Detalhadas", expanded=False):
                 stats_data = []
                 for layer, stat in results.items():
+                    layer_pt = NAMES_PT.get(layer, layer)
                     stats_data.append({
-                        'Camada': layer,
+                        'Camada': layer_pt,
                         'População Total': int(stat['total_pessoas']),
                         'Área (km²)': round(stat['area_km2'], 2),
                         'Densidade Média (hab/km²)': round(stat['densidade_media'], 2),
@@ -664,12 +676,12 @@ def main():
             
             # Display maps
             st.markdown("---")
-            st.markdown("## 🗺️ Mapas de Densidade Populacional")
+            st.markdown("## Mapas de Densidade Populacional")
             
             maps = [
-                ('map_flight_geography.png', 'Flight Geography'),
-                ('map_ground_risk_buffer.png', 'Ground Risk Buffer'),
-                ('map_adjacent_area.png', 'Adjacent Area')
+                ('map_flight_geography.png', 'Geografia de Voo'),
+                ('map_ground_risk_buffer.png', 'Buffer de Risco no Solo'),
+                ('map_adjacent_area.png', 'Área Adjacente')
             ]
             
             for map_file, map_title in maps:
@@ -680,14 +692,14 @@ def main():
             
             # Download results - KML and Maps together
             st.markdown("---")
-            st.markdown("## 📥 Download dos Resultados")
+            st.markdown("## Download dos Resultados")
             
             col1, col2, col3, col4 = st.columns(4)
             
             # KML download
             with col1:
                 st.download_button(
-                    label="📥 Margens de Segurança",
+                    label="Margens de Segurança (KML)",
                     data=kml_data,
                     file_name='safety_margins.kml',
                     mime='application/vnd.google-earth.kml+xml',
@@ -696,7 +708,7 @@ def main():
                 )
             
             # Map downloads
-            map_labels = ['📥 IBGE - Geografia de Voo', '📥 IBGE - Ground Risk Buffer', '📥 IBGE - Área Adjacente']
+            map_labels = ['Geografia de Voo (PNG)', 'Buffer de Risco no Solo (PNG)', 'Área Adjacente (PNG)']
             for idx, (map_file, map_title) in enumerate(maps):
                 map_path = os.path.join(analysis_output_dir, map_file)
                 if os.path.exists(map_path):
