@@ -628,8 +628,7 @@ def main():
                     <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">⚠️ Atenção: Restrições de Sobrevoo</p>
                     <p style="color: #e0e0e0; font-size: 0.9rem; margin: 0; line-height: 1.5;">
                         O voo sobre <strong>não anuentes é proibido</strong>. A trajetória de voo deve estar <strong>completamente contida</strong> 
-                        na Geografia de Voo e <strong>não pode sobrevoar terceiros</strong>. Certifique-se de que todas as propriedades 
-                        ao longo da rota possuem autorização dos proprietários.
+                        na Geografia de Voo e <strong>não pode sobrevoar terceiros</strong>.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -684,7 +683,7 @@ def main():
                 )
             
             # Map downloads
-            map_labels = ['📥 Mapa FG', '📥 Mapa GRB', '📥 Mapa AA']
+            map_labels = ['📥 IBGE - Geografia de Voo', '📥 IBGE - Ground Risk Buffer', '📥 IBGE - Área Adjacente']
             for idx, (map_file, map_title) in enumerate(maps):
                 map_path = os.path.join(analysis_output_dir, map_file)
                 if os.path.exists(map_path):
@@ -703,7 +702,7 @@ def main():
     # Footer
     st.markdown("""
     <div class="footer">
-        <p>© 2025 AL Drones - Todos os direitos reservados</p>
+        <p>© 2026 AL Drones - Todos os direitos reservados</p>
         <p>Desenvolvido pela AL Drones | 
         <a href="https://aldrones.com.br" target="_blank">aldrones.com.br</a></p>
     </div>
