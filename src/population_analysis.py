@@ -434,24 +434,45 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     }
 
 
-def analyze_population(kml_file, output_dir='results', buffer_info=None):
+def analyze_population(kml_file, output_dir='results', buffer_info=None, height=None):
     """
     Main function to analyze population density from safety margins KML.
     
     Args:
         kml_file (str): Path to KML file with safety margins
         output_dir (str): Directory to save output maps
-        buffer_info (dict): Optional dictionary with buffer and height info for each layer
-                           Format: {'Layer Name': {'buffer': value_m, 'height': value_m}}
+        buffer_info (dict): Optional dictionary with buffer values for each layer
+                           Format: {'fg_size': 0, 'cv_size': 215, 'grb_size': 295, 'adj_size': 5000}
+        height (float): Optional flight height in meters
         
     Returns:
         dict: Statistics for each analyzed layer
     """
     os.makedirs(output_dir, exist_ok=True)
     
-    # Use default if not provided
+    # Build buffer_info for legend display
     if buffer_info is None:
-        buffer_info = DEFAULT_BUFFER_INFO
+        buffer_info_display = DEFAULT_BUFFER_INFO
+    else:
+        # Map the buffer values to layer names
+        buffer_info_display = {
+            'Flight Geography': {
+                'buffer': buffer_info.get('fg_size', 0),
+                'height': height
+            },
+            'Contingency Volume': {
+                'buffer': buffer_info.get('cv_size', 215),
+                'height': None
+            },
+            'Ground Risk Buffer': {
+                'buffer': buffer_info.get('grb_size', 0),
+                'height': None
+            },
+            'Adjacent Area': {
+                'buffer': buffer_info.get('adj_size', 5000),
+                'height': None
+            }
+        }
     
     layers_kml = ["Flight Geography", "Contingency Volume", "Ground Risk Buffer", "Adjacent Area"]
     
@@ -474,7 +495,7 @@ def analyze_population(kml_file, output_dir='results', buffer_info=None):
         titulo="Densidade Populacional - Geografia de Voo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography'],
-        buffer_info=buffer_info,
+        buffer_info=buffer_info_display,
         output_path=os.path.join(output_dir, 'map_flight_geography.png')
     )
     if stats:
@@ -486,7 +507,7 @@ def analyze_population(kml_file, output_dir='results', buffer_info=None):
         titulo="Densidade Populacional - Distância de Segurança no Solo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer'],
-        buffer_info=buffer_info,
+        buffer_info=buffer_info_display,
         output_path=os.path.join(output_dir, 'map_ground_risk_buffer.png')
     )
     if stats:
@@ -501,7 +522,7 @@ def analyze_population(kml_file, output_dir='results', buffer_info=None):
             titulo="Densidade Populacional - Área Adjacente (SDO 50 V3)",
             layers_poligonos=layers_poligonos,
             layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer', 'Adjacent Area'],
-            buffer_info=buffer_info,
+            buffer_info=buffer_info_display,
             output_path=os.path.join(output_dir, 'map_adjacent_area.png')
         )
         if stats:
