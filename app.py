@@ -541,7 +541,20 @@ def main():
                 analysis_output_dir = os.path.join(output_dir, 'analysis_results')
                 os.makedirs(analysis_output_dir, exist_ok=True)
                 
-                results = pa.analyze_population(result_path, analysis_output_dir)
+                # Prepare buffer info from session state
+                buffer_info = {
+                    'fg_size': st.session_state.get('fg_size', 0),
+                    'cv_size': st.session_state.get('cv_size', 215),
+                    'grb_size': st.session_state.get('grb_size', 0),
+                    'adj_size': 5000  # Adjacent Area é sempre 5000m
+                }
+                
+                results = pa.analyze_population(
+                    result_path, 
+                    analysis_output_dir,
+                    buffer_info=buffer_info,
+                    height=st.session_state.get('height')
+                )
                 
                 progress_bar.progress(100)
                 status_text.empty()
