@@ -31,9 +31,11 @@ def calculate_grb_size(height):
         float: GRB size in meters
     """
     if height <= 120:
-        return height
+        height_cv = height + 15
+        return height_cv
     else:
-        return 25 * sqrt(2 * height / 9.81) + 1.485
+        height_cv = height + 15
+        return 25 * sqrt(2 * height_cv / 9.81) + 1.485
 
 
 def generate_safety_margins(
