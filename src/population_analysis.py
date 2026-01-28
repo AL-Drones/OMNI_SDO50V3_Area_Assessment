@@ -25,6 +25,22 @@ COLORS = {
     'Adjacent Area': '#1E90FF',  # Azul mais vibrante
 }
 
+# Portuguese names mapping
+NAMES_PT = {
+    'Flight Geography': 'Geografia de Voo',
+    'Contingency Volume': 'Volume de Contingência',
+    'Ground Risk Buffer': 'Buffer de Risco no Solo',
+    'Adjacent Area': 'Área Adjacente',
+}
+
+# Default buffer values (can be overridden)
+DEFAULT_BUFFER_INFO = {
+    'Flight Geography': {'buffer': 0, 'height': None},
+    'Contingency Volume': {'buffer': 10, 'height': None},  # 10m buffer padrão
+    'Ground Risk Buffer': {'buffer': 295, 'height': None},  # exemplo
+    'Adjacent Area': {'buffer': 5000, 'height': None},  # 5km
+}
+
 ALBERS_BR = (
     "+proj=aea +lat_0=-12 +lon_0=-54 +lat_1=-2 +lat_2=-22 "
     "+x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs"
@@ -165,14 +181,30 @@ def desenhar_contornos(ax, layers_poligonos, layer_order):
             )
 
 
-def criar_legenda_areas(layers_poligonos, layers_para_mostrar):
-    """Create legend elements with area information."""
+def criar_legenda_areas(layers_poligonos, layers_para_mostrar, buffer_info=None):
+    """Create legend elements with buffer and height information in Portuguese."""
+    if buffer_info is None:
+        buffer_info = DEFAULT_BUFFER_INFO
+    
     legend_elements = []
     
     for name in layers_para_mostrar:
         if name in layers_poligonos:
-            area_km2 = calcular_area_km2(layers_poligonos[name])
-            label = f"{name}\n({area_km2:.2f} km²)"
+            name_pt = NAMES_PT.get(name, name)
+            info = buffer_info.get(name, {})
+            buffer_m = info.get('buffer', 0)
+            height_m = info.get('height')
+            
+            # Format label
+            if buffer_m == 0 and height_m:
+                label = f"{name_pt}\n(Altura: {height_m}m)"
+            elif buffer_m > 0 and height_m:
+                label = f"{name_pt}\n(Buffer: {buffer_m}m, Altura: {height_m}m)"
+            elif buffer_m > 0:
+                label = f"{name_pt}\n(Buffer: {buffer_m}m)"
+            else:
+                label = name_pt
+            
             legend_elements.append(
                 Patch(facecolor='none', edgecolor=COLORS[name], 
                       linewidth=2.5, label=label)
@@ -182,10 +214,10 @@ def criar_legenda_areas(layers_poligonos, layers_para_mostrar):
 
 
 def criar_colormap_melhorado():
-    """Create an improved colormap with better contrast."""
-    # Colormap que vai de branco -> amarelo -> laranja -> vermelho -> marrom escuro
-    colors = ['#FFFFFF', '#FFFFCC', '#FFEDA0', '#FED976', '#FEB24C', 
-              '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026']
+    """Create an improved colormap from green to yellow to red."""
+    # Colormap que vai de verde → amarelo → laranja → vermelho
+    colors = ['#00FF00', '#7FFF00', '#FFFF00', '#FFD700', '#FFA500', 
+              '#FF8C00', '#FF6347', '#FF4500', '#FF0000', '#8B0000']
     n_bins = 100
     cmap = LinearSegmentedColormap.from_list('population', colors, N=n_bins)
     return cmap
@@ -237,7 +269,8 @@ def calcular_estatisticas(dados_intersec, area_geom=None):
     return total_pessoas, area_km2, densidade_media, densidade_maxima
 
 
-def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_mostrar, output_path=None):
+def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_mostrar, 
+                          buffer_info=None, output_path=None):
     """
     Process all relevant IBGE grids and create a single combined map.
     Uses 500km grid as spatial index to identify relevant quadrants.
@@ -326,7 +359,7 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     desenhar_contornos(ax, layers_poligonos, layers_para_mostrar)
     
     # Add legend for areas
-    legend_elements = criar_legenda_areas(layers_poligonos, layers_para_mostrar)
+    legend_elements = criar_legenda_areas(layers_poligonos, layers_para_mostrar, buffer_info)
     if legend_elements:
         ax.legend(
             handles=legend_elements,
@@ -359,8 +392,7 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     total_pessoas, area_km2, densidade_media, densidade_maxima = calcular_estatisticas(dados_area, area_geom)
     
     info_texto = (
-        f"📊 ESTATÍSTICAS\n"
-        f"{'─'*35}\n"
+        f"ESTATÍSTICAS\n"
         f"População Total: {int(total_pessoas):,} habitantes\n"
         f"Área do Polígono: {area_km2:.2f} km²\n"
         f"Densidade Média: {densidade_media:.2f} hab/km²\n"
@@ -379,7 +411,7 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
             edgecolor='black',
             boxstyle='round,pad=0.8'
         ),
-        family='monospace'
+        family='Segoe UI'
     )
     
     # Improve grid
@@ -402,18 +434,24 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     }
 
 
-def analyze_population(kml_file, output_dir='results'):
+def analyze_population(kml_file, output_dir='results', buffer_info=None):
     """
     Main function to analyze population density from safety margins KML.
     
     Args:
         kml_file (str): Path to KML file with safety margins
         output_dir (str): Directory to save output maps
+        buffer_info (dict): Optional dictionary with buffer and height info for each layer
+                           Format: {'Layer Name': {'buffer': value_m, 'height': value_m}}
         
     Returns:
         dict: Statistics for each analyzed layer
     """
     os.makedirs(output_dir, exist_ok=True)
+    
+    # Use default if not provided
+    if buffer_info is None:
+        buffer_info = DEFAULT_BUFFER_INFO
     
     layers_kml = ["Flight Geography", "Contingency Volume", "Ground Risk Buffer", "Adjacent Area"]
     
@@ -436,6 +474,7 @@ def analyze_population(kml_file, output_dir='results'):
         titulo="Densidade Populacional - Geografia de Voo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography'],
+        buffer_info=buffer_info,
         output_path=os.path.join(output_dir, 'map_flight_geography.png')
     )
     if stats:
@@ -447,6 +486,7 @@ def analyze_population(kml_file, output_dir='results'):
         titulo="Densidade Populacional - Distância de Segurança no Solo (SDO 50 V3)",
         layers_poligonos=layers_poligonos,
         layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer'],
+        buffer_info=buffer_info,
         output_path=os.path.join(output_dir, 'map_ground_risk_buffer.png')
     )
     if stats:
@@ -461,6 +501,7 @@ def analyze_population(kml_file, output_dir='results'):
             titulo="Densidade Populacional - Área Adjacente (SDO 50 V3)",
             layers_poligonos=layers_poligonos,
             layers_para_mostrar=['Flight Geography', 'Contingency Volume', 'Ground Risk Buffer', 'Adjacent Area'],
+            buffer_info=buffer_info,
             output_path=os.path.join(output_dir, 'map_adjacent_area.png')
         )
         if stats:
@@ -489,10 +530,23 @@ def main():
         default='results',
         help='Output directory for maps (default: results/)'
     )
+    parser.add_argument(
+        '--height',
+        type=float,
+        help='Flight height in meters (optional)'
+    )
     
     args = parser.parse_args()
     
-    analyze_population(args.kml_file, args.output_dir)
+    # Example: customize buffer info if you know the values
+    # You can modify these values or read them from a config file
+    buffer_info = DEFAULT_BUFFER_INFO.copy()
+    
+    # If height is provided, add it to Flight Geography
+    if args.height:
+        buffer_info['Flight Geography']['height'] = args.height
+    
+    analyze_population(args.kml_file, args.output_dir, buffer_info)
 
 
 if __name__ == '__main__':
