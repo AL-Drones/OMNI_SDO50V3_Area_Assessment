@@ -12,14 +12,17 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import contextily as cx
 import pandas as pd
+from matplotlib.patches import Patch
+from matplotlib.colors import LinearSegmentedColormap
+import numpy as np
 
 
 # Configuration
 COLORS = {
-    'Flight Geography': 'green',
-    'Contingency Volume': 'orange',
-    'Ground Risk Buffer': 'red',
-    'Adjacent Area': 'blue',
+    'Flight Geography': '#00AA00',  # Verde mais vibrante
+    'Contingency Volume': '#FF8C00',  # Laranja mais vibrante
+    'Ground Risk Buffer': '#DC143C',  # Vermelho mais vibrante
+    'Adjacent Area': '#1E90FF',  # Azul mais vibrante
 }
 
 ALBERS_BR = (
@@ -147,13 +150,61 @@ def carregar_grid_ibge(grade_id, use_cache=True):
     return dados, grade_id
 
 
+def calcular_area_km2(geom):
+    """Calculate area in km² for a geometry in WGS84."""
+    geom_projected = gpd.GeoSeries([geom], crs='EPSG:4326').to_crs(ALBERS_BR)
+    return float(geom_projected.area.iloc[0] / 1e6)
+
+
 def desenhar_contornos(ax, layers_poligonos, layer_order):
-    """Draw layer boundaries."""
+    """Draw layer boundaries with improved styling."""
     for name in layer_order:
         if name in layers_poligonos:
             gpd.GeoSeries([layers_poligonos[name]]).boundary.plot(
-                ax=ax, color=COLORS[name], linewidth=2
+                ax=ax, color=COLORS[name], linewidth=2.5, linestyle='-', zorder=10
             )
+
+
+def criar_legenda_areas(layers_poligonos, layers_para_mostrar):
+    """Create legend elements with area information."""
+    legend_elements = []
+    
+    for name in layers_para_mostrar:
+        if name in layers_poligonos:
+            area_km2 = calcular_area_km2(layers_poligonos[name])
+            label = f"{name}\n({area_km2:.2f} km²)"
+            legend_elements.append(
+                Patch(facecolor='none', edgecolor=COLORS[name], 
+                      linewidth=2.5, label=label)
+            )
+    
+    return legend_elements
+
+
+def criar_colormap_melhorado():
+    """Create an improved colormap with better contrast."""
+    # Colormap que vai de branco -> amarelo -> laranja -> vermelho -> marrom escuro
+    colors = ['#FFFFFF', '#FFFFCC', '#FFEDA0', '#FED976', '#FEB24C', 
+              '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026']
+    n_bins = 100
+    cmap = LinearSegmentedColormap.from_list('population', colors, N=n_bins)
+    return cmap
+
+
+def determinar_zoom_adequado(area_km2):
+    """Determine appropriate zoom level based on area size."""
+    if area_km2 < 1:
+        return 16
+    elif area_km2 < 5:
+        return 15
+    elif area_km2 < 20:
+        return 14
+    elif area_km2 < 100:
+        return 13
+    elif area_km2 < 500:
+        return 12
+    else:
+        return 11
 
 
 def calcular_estatisticas(dados_intersec, area_geom=None):
@@ -243,57 +294,102 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
     dados_area['densidade_pop_km2'] = dados_area['TOTAL'] / dados_area['area_km2']
     dados_combinados['densidade_pop_km2'] = dados_area['densidade_pop_km2'].values
     
-    # Plot
-    fig, ax = plt.subplots(figsize=(24, 24))
+    # Create improved colormap
+    cmap = criar_colormap_melhorado()
+    
+    # Determine figure size based on area
+    area_analise_km2 = calcular_area_km2(area_geom)
+    fig_size = min(30, max(20, area_analise_km2 * 0.5))
+    
+    # Plot with improved settings
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size), dpi=150)
+    
+    # Plot population density with improved colormap
     dados_combinados.plot(
         column='densidade_pop_km2',
         ax=ax,
         legend=True,
-        cmap='YlOrBr',
-        alpha=0.6,
-        edgecolor='black',
-        linewidth=0.2,
-        legend_kwds={'shrink': 0.3, 'label': 'Density (pop/km²)'}
+        cmap=cmap,
+        alpha=0.7,
+        edgecolor='gray',
+        linewidth=0.15,
+        legend_kwds={
+            'shrink': 0.5, 
+            'label': 'Densidade Populacional (hab/km²)',
+            'orientation': 'vertical',
+            'pad': 0.02
+        },
+        vmin=0  # Garante que a escala começa do zero
     )
     
+    # Draw boundaries
     desenhar_contornos(ax, layers_poligonos, layers_para_mostrar)
     
-    ax.set_title(titulo, fontsize=18, fontweight='bold')
-    ax.set_xlabel("Longitude [deg]", fontsize=14)
-    ax.set_ylabel("Latitude [deg]", fontsize=14)
+    # Add legend for areas
+    legend_elements = criar_legenda_areas(layers_poligonos, layers_para_mostrar)
+    if legend_elements:
+        ax.legend(
+            handles=legend_elements,
+            loc='upper left',
+            fontsize=11,
+            framealpha=0.95,
+            edgecolor='black',
+            title='Áreas Analisadas',
+            title_fontsize=12
+        )
     
+    ax.set_title(titulo, fontsize=20, fontweight='bold', pad=20)
+    ax.set_xlabel("Longitude [°]", fontsize=14, fontweight='bold')
+    ax.set_ylabel("Latitude [°]", fontsize=14, fontweight='bold')
+    
+    # Add basemap with appropriate zoom
+    zoom_level = determinar_zoom_adequado(area_analise_km2)
     try:
         cx.add_basemap(
             ax,
             crs=dados_combinados.crs.to_string(),
             source=cx.providers.OpenStreetMap.Mapnik,
-            alpha=0.6,
-            zoom=13
+            alpha=0.5,
+            zoom=zoom_level
         )
     except Exception as e:
         print(f"⚠ Could not add basemap: {e}")
     
-    # Statistics
+    # Statistics box with improved formatting
     total_pessoas, area_km2, densidade_media, densidade_maxima = calcular_estatisticas(dados_area, area_geom)
     
     info_texto = (
-        f"Total population: {int(total_pessoas):,}\n"
-        f"Polygon area: {area_km2:.2f} km²\n"
-        f"Average density: {densidade_media:.2f} pop/km²\n"
-        f"Maximum density: {densidade_maxima:.2f} pop/km²"
+        f"📊 ESTATÍSTICAS\n"
+        f"{'─'*35}\n"
+        f"População Total: {int(total_pessoas):,} habitantes\n"
+        f"Área do Polígono: {area_km2:.2f} km²\n"
+        f"Densidade Média: {densidade_media:.2f} hab/km²\n"
+        f"Densidade Máxima: {densidade_maxima:.2f} hab/km²"
     ).replace(",", ".")
     
     ax.text(
-        0.0, -0.10,
+        0.02, 0.02,
         info_texto,
         transform=ax.transAxes,
-        fontsize=12,
-        verticalalignment='top',
-        bbox=dict(facecolor='white', alpha=0.85)
+        fontsize=11,
+        verticalalignment='bottom',
+        bbox=dict(
+            facecolor='white', 
+            alpha=0.95, 
+            edgecolor='black',
+            boxstyle='round,pad=0.8'
+        ),
+        family='monospace'
     )
     
+    # Improve grid
+    ax.grid(True, alpha=0.3, linestyle='--', linewidth=0.5)
+    ax.tick_params(labelsize=11)
+    
+    plt.tight_layout()
+    
     if output_path:
-        plt.savefig(output_path, dpi=150, bbox_inches='tight')
+        plt.savefig(output_path, dpi=300, bbox_inches='tight', facecolor='white')
         print(f"✓ Map saved: {output_path}")
     
     plt.close()
