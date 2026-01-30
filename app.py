@@ -691,11 +691,15 @@ def main():
             # PDF download
             with col1:
                 try:
+                    # Import apenas quando necessário
+                    from src import pdf_generator as pdf_gen
+                    
                     pdf_data = pdf_gen.generate_pdf_report(
                         results, 
                         analysis_output_dir, 
                         buffer_info,
-                        st.session_state.get('height')
+                        st.session_state.get('height'),
+                        kml_data=kml_data  # Adicione esta linha
                     )
                     st.download_button(
                         label="📄 Relatório PDF",
@@ -704,6 +708,8 @@ def main():
                         mime='application/pdf',
                         use_container_width=True
                     )
+                except ImportError:
+                    st.warning("⚠️ Biblioteca reportlab não disponível. Instale com: pip install reportlab")
                 except Exception as e:
                     st.error(f"Erro ao gerar PDF: {str(e)}")
             
