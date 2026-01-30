@@ -245,12 +245,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height):
         alignment=TA_CENTER
     )
     
-    story.append(Paragraph("AL Drones - Análise de Área de Voo", footer_style))
-    story.append(Paragraph("© 2026 AL Drones - Todos os direitos reservados", footer_style))
-    story.append(Paragraph("www.aldrones.com.br", footer_style))
-    story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(
-        f"Este relatório foi gerado automaticamente em {datetime.now().strftime('%d/%m/%Y às %H:%M')}",
+        f"Este relatório foi gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}",
         footer_style
     ))
     
