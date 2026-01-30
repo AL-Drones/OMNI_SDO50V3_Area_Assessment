@@ -79,11 +79,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height):
     )
     
     # Header with logos and title
-    story.append(Paragraph("AL DRONES", title_style))
-    story.append(Paragraph("Relatório de Análise de Área de Voo", subtitle_style))
-    story.append(Paragraph("SwissDrones SDO 50 V3", normal_style))
-    story.append(Spacer(1, 0.3*cm))
-    story.append(Paragraph(f"Data de Geração: {datetime.now().strftime('%d/%m/%Y às %H:%M')}", normal_style))
+    story.append(Paragraph("Relatório de Análise de Área de Voo", title_style))
+    story.append(Paragraph("RPA: SwissDrones SDO 50 V3", subtitle_style))
     story.append(Spacer(1, 0.8*cm))
     
     # Separator line
@@ -99,10 +96,9 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height):
     params_data = [
         ['Parâmetro', 'Valor'],
         ['Altura de Voo', f"{height} m"],
-        ['Flight Geography Buffer', f"{buffer_info['fg_size']} m"],
-        ['Contingency Volume', f"{buffer_info['cv_size']} m"],
-        ['Ground Risk Buffer', f"{buffer_info['grb_size']} m"],
-        ['Adjacent Area', f"{buffer_info['adj_size']} m"]
+        ['Volume de Contingêcia', f"{buffer_info['cv_size']} m"],
+        ['Distância de Segurança no Solo', f"{buffer_info['grb_size']} m"],
+        ['Área Adjacente', f"{buffer_info['adj_size']} m"]
     ]
     
     params_table = Table(params_data, colWidths=[10*cm, 6*cm])
