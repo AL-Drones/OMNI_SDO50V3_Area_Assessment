@@ -7,10 +7,12 @@ import os
 import tempfile
 from pathlib import Path
 import geopandas as gpd
+from datetime import datetime
 
 # Import from src folder
 from src import generate_safety_margins as gsm
 from src import population_analysis as pa
+from src import pdf_generator as pdf_gen
 
 
 # Page configuration
@@ -563,7 +565,8 @@ def main():
                     st.session_state['analysis_results'] = {
                         'stats': results,
                         'output_dir': analysis_output_dir,
-                        'kml_data': kml_data
+                        'kml_data': kml_data,
+                        'buffer_info': buffer_info
                     }
                     st.rerun()
                 else:
@@ -585,6 +588,7 @@ def main():
             results = st.session_state['analysis_results']['stats']
             analysis_output_dir = st.session_state['analysis_results']['output_dir']
             kml_data = st.session_state['analysis_results']['kml_data']
+            buffer_info = st.session_state['analysis_results']['buffer_info']
             
             st.success("✅ Análise concluída com sucesso!")
             
@@ -678,16 +682,35 @@ def main():
                     st.markdown(f"### {map_title}")
                     st.image(map_path, use_container_width=True)
             
-            # Download results - KML and Maps together
+            # Download results
             st.markdown("---")
             st.markdown("## 📥 Download dos Resultados")
             
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3, col4, col5 = st.columns(5)
+            
+            # PDF download
+            with col1:
+                try:
+                    pdf_data = pdf_gen.generate_pdf_report(
+                        results, 
+                        analysis_output_dir, 
+                        buffer_info,
+                        st.session_state.get('height')
+                    )
+                    st.download_button(
+                        label="📄 Relatório PDF",
+                        data=pdf_data,
+                        file_name=f'relatorio_analise_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf',
+                        mime='application/pdf',
+                        use_container_width=True
+                    )
+                except Exception as e:
+                    st.error(f"Erro ao gerar PDF: {str(e)}")
             
             # KML download
-            with col1:
+            with col2:
                 st.download_button(
-                    label="📥 Margens de Segurança",
+                    label="📥 Margens KML",
                     data=kml_data,
                     file_name='safety_margins.kml',
                     mime='application/vnd.google-earth.kml+xml',
@@ -700,7 +723,7 @@ def main():
             for idx, (map_file, map_title) in enumerate(maps):
                 map_path = os.path.join(analysis_output_dir, map_file)
                 if os.path.exists(map_path):
-                    with [col2, col3, col4][idx]:
+                    with [col3, col4, col5][idx]:
                         with open(map_path, 'rb') as f:
                             file_data = f.read()
                             st.download_button(
