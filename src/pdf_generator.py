@@ -53,7 +53,7 @@ def info_box(text, bg_color, border_color, style):
 # =====================================================
 # Main PDF generator
 # =====================================================
-def generate_population_report(
+def generate_pdf_report(
     output_path,
     rpa_name,
     operation_area,
