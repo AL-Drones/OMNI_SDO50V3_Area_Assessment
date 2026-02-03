@@ -215,6 +215,27 @@ st.markdown("""
         background: rgba(5, 71, 80, 0.2);
         border-color: #E0AB25;
     }
+
+    }
+    
+    /* Fix para o ícone do expander */
+    .streamlit-expanderHeader svg {
+        fill: #E0AB25 !important;
+    }
+    
+    /* Esconder texto do ícone "_arrow_right" */
+    details summary::before {
+        content: none !important;
+    }
+    
+    details summary {
+        list-style: none;
+    }
+    
+    details summary::-webkit-details-marker {
+        display: none;
+    }
+    
     
     /* Fix expander icon overlap */
     .streamlit-expanderHeader p {
@@ -436,7 +457,7 @@ def main():
                 
                 if has_point_or_line and not has_polygon:
                     fg_size = st.number_input(
-                        "Flight Geography Buffer (m)",
+                        "Geografia de Voo (m)",
                         min_value=0.0,
                         value=50.0,
                         step=10.0,
