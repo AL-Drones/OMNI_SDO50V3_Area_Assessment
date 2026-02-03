@@ -598,14 +598,14 @@ def main():
             
             for idx, (layer_name, stats) in enumerate(results.items()):
                 with cols[idx]:
-                    if layer_name in ['Flight Geography', 'Ground Risk Buffer']:
+                    if layer_name in ['Geografia de Voo', 'Distância de Segurança no Solo']:
                         densidade = stats['densidade_maxima']
                         density_label = "Máx"
                     else:
                         densidade = stats['densidade_media']
                         density_label = "Média"
                     
-                    if layer_name == 'Adjacent Area':
+                    if layer_name == 'Área Adjacente':
                         threshold = 50
                     else:
                         threshold = 5
@@ -632,14 +632,14 @@ def main():
                         """, unsafe_allow_html=True)
                         
                         # Check if warning should be shown
-                        if layer_name in ['Flight Geography', 'Ground Risk Buffer'] and 0 < densidade <= 5:
+                        if layer_name in ['Geografia de Voo', 'Distância de Segurança no Solo'] and 0 < densidade <= 5:
                             show_warning = True
             
             # Show warning if Flight Geography or GRB has density between 0 and 5
             if show_warning:
                 st.markdown("""
                 <div style="background: rgba(255, 165, 0, 0.1); padding: 1rem; border-radius: 5px; border-left: 4px solid #FFA500; margin-top: 1rem;">
-                    <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">⚠️ Atenção: Restrições de Sobrevoo</p>
+                    <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">⚠️ Atenção: Restrições de Voo</p>
                     <p style="color: #e0e0e0; font-size: 0.9rem; margin: 0; line-height: 1.5;">
                         O voo sobre <strong>não anuentes é proibido</strong>. A trajetória de voo deve estar <strong>completamente contida</strong> 
                         na Geografia de Voo.
