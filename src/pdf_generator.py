@@ -180,11 +180,16 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
     
-        # Definição dos critérios
-        if area.lower().startswith("área adjacente"):
-            densidade = stats["densidade_media"]
+        area_km2 = stats["area_km2"]
+        populacao = stats["total_pessoas"]
+    
+        # --- Área Adjacente: REGRA FIXA ---
+        if "adjacente" in area.lower():
+            densidade = populacao / area_km2 if area_km2 > 0 else 0
             limite = 50
             tipo_txt = "Densidade média"
+    
+        # --- Demais áreas: mantém como estava antes ---
         else:
             densidade = stats["densidade_maxima"]
             limite = 5
@@ -205,8 +210,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
         story.append(Paragraph(
             f"<b>{tipo_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
             f"<b>Limite aceitável:</b> {limite} hab/km²<br/>"
-            f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
-            f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
+            f"<b>População total:</b> {int(populacao)} habitantes<br/>"
+            f"<b>Área analisada:</b> {area_km2:.2f} km²",
             normal
         ))
 
@@ -232,7 +237,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     story.append(Spacer(1, 0.4*cm))
     
     resumo_data = [
-        ["Área Avaliada", "Valor Calculado (hab/km²)", "Limite Aceitável (hab/km²)", "Conformidade"]
+        ["Área Avaliada", "Densidade (hab/km²)", "Limite (hab/km²)", "Conformidade"]
     ]
     
     for a in avaliacoes:
@@ -243,16 +248,25 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
             "CONFORME" if a["conforme"] else "NÃO CONFORME"
         ])
     
-    resumo_table = Table(resumo_data, colWidths=[6*cm, 4*cm, 4*cm, 2*cm])
+    resumo_table = Table(
+        resumo_data,
+        colWidths=[6.5*cm, 3.5*cm, 3.5*cm, 2.5*cm],
+        repeatRows=1
+    )
+    
     resumo_table.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.8, colors.grey),
         ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('ALIGN', (1,1), (-1,-1), 'CENTER')
+        ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('TOPPADDING', (0,0), (-1,-1), 6),
     ]))
     
     story.append(resumo_table)
     
+        
 
 
     # =====================================================
