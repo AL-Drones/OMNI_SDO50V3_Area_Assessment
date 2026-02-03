@@ -31,7 +31,7 @@ st.markdown("""
     
     /* Apply font globally */
     * {
-        font-family: 'Segoe UI Emoji', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Segoe UI Emoji', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     /* Hide Streamlit header elements */
