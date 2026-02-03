@@ -167,92 +167,120 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     ))
 
     # =====================================================
-    # 4. RESULTADOS
+    # 4. RESULTADOS DA ANÁLISE
     # =====================================================
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("4. Resultados da Análise", heading))
     
     area_aprovada = True
-    notas_nao_conformidade = []
+    avaliacoes = []
     
     LIMITES = {
-        "Flight Geography": {"tipo": "máxima", "valor": 5},
-        "Ground Risk Buffer": {"tipo": "máxima", "valor": 5},
-        "Área Adjacente": {"tipo": "média", "valor": 50}
+        "Flight Geography": {
+            "tipo": "máxima",
+            "valor": 5
+        },
+        "Ground Risk Buffer": {
+            "tipo": "máxima",
+            "valor": 5
+        },
+        "Área Adjacente": {
+            "tipo": "média",
+            "valor": 50
+        }
     }
     
     for area, stats in results.items():
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
     
-        limite = LIMITES.get(area)
+        limite = LIMITES[area]
     
-        # --- Caso a área não esteja mapeada ---
-        if limite is None:
-            story.append(Paragraph(
-                "<b>Aviso:</b> Não há critério de conformidade definido no Manual "
-                "de Operações para esta área. Os valores abaixo são apresentados "
-                "apenas para fins informativos.",
-                normal
-            ))
-    
-            story.append(Paragraph(
-                f"<b>Densidade média:</b> {stats['densidade_media']:.2f} hab/km²<br/>"
-                f"<b>Densidade máxima:</b> {stats['densidade_maxima']:.2f} hab/km²<br/>"
-                f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
-                f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
-                normal
-            ))
-            continue
-    
-        # --- Áreas com critério definido ---
         if limite["tipo"] == "máxima":
             densidade = stats["densidade_maxima"]
-            criterio_txt = "Densidade máxima"
+            tipo_txt = "Densidade máxima"
         else:
             densidade = stats["densidade_media"]
-            criterio_txt = "Densidade média"
+            tipo_txt = "Densidade média"
     
         story.append(Paragraph(
-            f"<b>{criterio_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
+            f"<b>{tipo_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
             f"<b>Limite aceitável:</b> {limite['valor']} hab/km²<br/>"
             f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
             f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
             normal
         ))
     
-        if densidade > limite["valor"]:
+        conforme = densidade <= limite["valor"]
+    
+        avaliacoes.append({
+            "area": area,
+            "densidade": densidade,
+            "limite": limite["valor"],
+            "conforme": conforme
+        })
+    
+        if not conforme:
             area_aprovada = False
-            notas_nao_conformidade.append(
-                f"A área <b>{area}</b> excede o limite aceitável de densidade populacional."
-            )
 
 
     # =====================================================
-    # 5. AVALIAÇÃO FINAL
+    # 5. AVALIAÇÃO FINAL DA ÁREA OPERACIONAL
     # =====================================================
     story.append(Spacer(1, 0.6*cm))
     story.append(Paragraph("5. Avaliação Final da Área Operacional", heading))
-    story.append(Spacer(1, 0.4*cm))
-
+    story.append(Spacer(1, 0.3*cm))
+    
     if area_aprovada:
-        story.append(Paragraph("ÁREA OPERACIONAL APROVADA", result_ok))
+        resultado_style = ParagraphStyle(
+            'ResultadoAprovado',
+            parent=normal,
+            textColor=colors.green,
+            fontSize=11
+        )
+    
         story.append(Paragraph(
-            "A área operacional analisada atende aos critérios de exposição de terceiros "
-            "no solo definidos no Manual de Operações do SDO 50 V3 e é considerada "
-            "adequada para a operação proposta.",
-            normal
+            "<b>RESULTADO FINAL: ÁREA APROVADA</b>",
+            resultado_style
         ))
     else:
-        story.append(Paragraph("ÁREA OPERACIONAL NÃO APROVADA", result_nok))
+        resultado_style = ParagraphStyle(
+            'ResultadoReprovado',
+            parent=normal,
+            textColor=colors.red,
+            fontSize=11
+        )
+    
         story.append(Paragraph(
-            "A área operacional analisada não atende aos critérios estabelecidos no "
-            "Manual de Operações. As seguintes não conformidades foram identificadas:",
-            normal
+            "<b>RESULTADO FINAL: ÁREA NÃO APROVADA</b>",
+            resultado_style
         ))
-        for nota in notas_nao_conformidade:
-            story.append(Spacer(1, 0.2*cm))
-            story.append(Paragraph(f"• {nota}", normal))
+    
+    story.append(Spacer(1, 0.4*cm))
+    
+    # Tabela resumo: valor encontrado vs limite
+    resumo_data = [
+        ["Área Avaliada", "Densidade Calculada (hab/km²)", "Limite Aceitável (hab/km²)", "Conformidade"]
+    ]
+    
+    for a in avaliacoes:
+        resumo_data.append([
+            a["area"],
+            f"{a['densidade']:.2f}",
+            f"{a['limite']}",
+            "CONFORME" if a["conforme"] else "NÃO CONFORME"
+        ])
+    
+    resumo_table = Table(resumo_data, colWidths=[6*cm, 4*cm, 4*cm, 2*cm])
+    resumo_table.setStyle(TableStyle([
+        ('GRID', (0,0), (-1,-1), 0.8, colors.grey),
+        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        ('ALIGN', (1,1), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold')
+    ]))
+    
+    story.append(resumo_table)
+
 
     # =====================================================
     # 6. MAPAS
