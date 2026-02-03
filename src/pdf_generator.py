@@ -6,9 +6,9 @@ Aligned with SDO 50 V3 Operations Manual – Area Analysis Section
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from io import BytesIO
 from datetime import datetime
 from PIL import Image as PILImage
@@ -16,9 +16,6 @@ import os
 
 
 def compress_image(image_path, max_size=(2000, 1500), quality=90):
-    """
-    Compress image while preserving resolution for technical review.
-    """
     img = PILImage.open(image_path)
 
     if img.mode == 'RGBA':
@@ -34,12 +31,8 @@ def compress_image(image_path, max_size=(2000, 1500), quality=90):
 
 
 def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_data=None):
-    """
-    Generate PDF report for operational area analysis,
-    aligned with the SDO 50 V3 Operations Manual.
-    """
-
     buffer = BytesIO()
+
     doc = SimpleDocTemplate(
         buffer,
         pagesize=A4,
@@ -49,8 +42,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
         bottomMargin=2*cm
     )
 
-    story = []
     styles = getSampleStyleSheet()
+    story = []
 
     title = ParagraphStyle(
         'Title', styles['Heading1'],
@@ -80,14 +73,14 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # =====================================================
     # COVER
     # =====================================================
-    story.append(Paragraph("Relatório de Análise de Área Operacional", title))
+    story.append(Paragraph("Relatório de Análise de Área", title))
     story.append(Spacer(1, 0.4*cm))
     story.append(Paragraph("RPA: SwissDrones SDO 50 V3", styles['Normal']))
     story.append(Paragraph(
         f"Data de geração: {datetime.now().strftime('%d/%m/%Y %H:%M')}",
         styles['Normal']
     ))
-    story.append(PageBreak())
+    story.append(Spacer(1, 0.8*cm))
 
     # =====================================================
     # 1. OBJECTIVE AND REFERENCES
@@ -96,20 +89,19 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     story.append(Spacer(1, 0.3*cm))
 
     story.append(Paragraph(
-        "Este relatório apresenta a análise da área operacional proposta para o "
-        "SDO 50 V3, conforme descrito no Manual de Operações da aeronave. "
-        "O objetivo é verificar a conformidade da área quanto à presença de terceiros "
+        "Este relatório apresenta a análise da área de operação proposta para o "
+        "RPAS SDO 50 V3, conforme descrito no Manual de Operações da aeronave. "
+        "O objetivo é verificar a conformidade da área quanto à exposição de terceiros "
         "no solo, por meio da avaliação da densidade populacional nas regiões "
-        "associadas à operação.",
+        "associadas à operação, a partir de dados do IBGE 2022.",
         normal
     ))
 
     story.append(Spacer(1, 0.3*cm))
     story.append(Paragraph(
         "<b>Referências:</b><br/>"
-        "• Manual de Operações – AL-OMNI-SDO50<br/>"
-        "• Regulamentos aplicáveis da ANAC para RPAS Classe 3<br/>"
-        "• Dados populacionais oficiais (IBGE 2022)",
+        "• Manual de Operações – AL-OMNI-SDO50-OM<br/>"
+        "• Dados populacionais oficiais (IBGE – Censo 2022)",
         normal
     ))
 
@@ -118,10 +110,11 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # =====================================================
     story.append(Spacer(1, 0.4*cm))
     story.append(Paragraph("2. Parâmetros Operacionais", heading))
+    story.append(Spacer(1, 0.3*cm))
 
     table_data = [
         ["Altura de voo", f"{height} m"],
-        ["Flight Geography", f"{buffer_info.get('fg_size', 0)} m"],
+        ["Flight Geography (FG)", f"{buffer_info.get('fg_size', 0)} m"],
         ["Contingency Volume (CV)", f"{buffer_info['cv_size']} m"],
         ["Ground Risk Buffer (GRB)", f"{buffer_info['grb_size']} m"],
         ["Área Adjacente", f"{buffer_info['adj_size']} m"]
@@ -129,36 +122,44 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
 
     table = Table(table_data, colWidths=[8*cm, 8*cm])
     table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 1, colors.grey),
+        ('GRID', (0,0), (-1,-1), 0.8, colors.grey),
         ('BACKGROUND', (0,0), (-1,0), colors.lightgrey)
     ]))
     story.append(table)
 
-    story.append(PageBreak())
-
     # =====================================================
     # 3. METHODOLOGY
     # =====================================================
+    story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("3. Metodologia de Análise", heading))
     story.append(Spacer(1, 0.3*cm))
 
     story.append(Paragraph(
-        "A análise foi realizada com base na interseção das geometrias operacionais "
-        "com dados de densidade populacional do IBGE (Censo 2022). "
-        "Foram avaliadas as métricas de densidade média e máxima para cada área, "
-        "em conformidade com os critérios definidos no Manual de Operações.",
+        "A análise foi conduzida a partir da interseção das geometrias operacionais "
+        "(Flight Geography, Ground Risk Buffer e Área Adjacente) com dados de "
+        "densidade populacional provenientes do IBGE. "
+        "Foram avaliadas as métricas de densidade média, densidade máxima e "
+        "população total em cada área, conforme critérios definidos no Manual "
+        "de Operações.",
         normal
     ))
 
     # =====================================================
-    # 4. RESULTS AND COMPLIANCE
+    # 4. RESULTS
     # =====================================================
-    story.append(Spacer(1, 0.4*cm))
+    story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("4. Resultados da Análise", heading))
+
+    area_approved = True
+    approval_notes = []
+
+    # >>>>>> AJUSTE AQUI SE NECESSÁRIO <<<<<<
+    MAX_ALLOWED_DENSITY = 1000  # hab/km² (exemplo)
 
     for area, stats in results.items():
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
+
         story.append(Paragraph(
             f"Densidade média: {stats['densidade_media']:.2f} hab/km²<br/>"
             f"Densidade máxima: {stats['densidade_maxima']:.2f} hab/km²<br/>"
@@ -167,37 +168,58 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
             normal
         ))
 
-    story.append(PageBreak())
+        if stats['densidade_maxima'] > MAX_ALLOWED_DENSITY:
+            area_approved = False
+            approval_notes.append(
+                f"A área <b>{area}</b> apresenta densidade máxima superior ao limite aceitável."
+            )
 
     # =====================================================
-    # 5. MAPS
+    # 5. FINAL ASSESSMENT
     # =====================================================
-    story.append(Paragraph("5. Mapas de Densidade Populacional", heading))
+    story.append(Spacer(1, 0.6*cm))
+    story.append(Paragraph("5. Avaliação Final da Área Operacional", heading))
     story.append(Spacer(1, 0.3*cm))
 
+    if area_approved:
+        story.append(Paragraph(
+            "<b>Resultado:</b> A área operacional analisada é considerada "
+            "<b>APROVADA</b> para a operação proposta, uma vez que os níveis de "
+            "exposição de terceiros no solo permanecem dentro dos limites "
+            "aceitáveis definidos no Manual de Operações.",
+            normal
+        ))
+    else:
+        story.append(Paragraph(
+            "<b>Resultado:</b> A área operacional analisada é considerada "
+            "<b>NÃO APROVADA</b> para a operação proposta. "
+            "Foram identificadas as seguintes não conformidades:",
+            normal
+        ))
+        for note in approval_notes:
+            story.append(Spacer(1, 0.2*cm))
+            story.append(Paragraph(f"• {note}", normal))
+
+    # =====================================================
+    # 6. MAPS
+    # =====================================================
+    story.append(Spacer(1, 0.6*cm))
+    story.append(Paragraph("6. Mapas de Densidade Populacional", heading))
+
     map_files = [
-        ("map_flight_geography.png", "Flight Geography"),
-        ("map_ground_risk_buffer.png", "Ground Risk Buffer"),
-        ("map_adjacent_area.png", "Adjacent Area")
+        ("map_flight_geography.png", "Geografia de Voo"),
+        ("map_ground_risk_buffer.png", "Distância de Segurança no Solo"),
+        ("map_adjacent_area.png", "Área Adjacente")
     ]
 
-    for file, title in map_files:
+    for file, title_txt in map_files:
         path = os.path.join(analysis_output_dir, file)
         if os.path.exists(path):
-            story.append(Spacer(1, 0.3*cm))
-            story.append(Paragraph(title, subheading))
+            story.append(Spacer(1, 0.4*cm))
+            story.append(Paragraph(title_txt, subheading))
             img_data = compress_image(path)
             img = Image(img_data, width=17*cm, height=12*cm)
             story.append(img)
-            story.append(PageBreak())
-
-    # =====================================================
-    # FOOTER
-    # =====================================================
-    story.append(Paragraph(
-        "Relatório gerado automaticamente – AL Drones",
-        ParagraphStyle('Footer', styles['Normal'], alignment=TA_CENTER, fontSize=9)
-    ))
 
     doc.build(story)
     buffer.seek(0)
