@@ -175,66 +175,41 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     area_aprovada = True
     avaliacoes = []
     
-    CRITERIOS = [
-        {
-            "nome": "Geografia de Voo",
-            "tipo": "máxima",
-            "limite": 5
-        },
-        {
-            "nome": "Distância de Segurança no Solo",
-            "tipo": "máxima",
-            "limite": 5
-        },
-        {
-            "nome": "Área Adjacente",
-            "tipo": "média",
-            "limite": 50
-        }
-    ]
+    for area, stats in results.items():
     
-    for criterio in CRITERIOS:
-        nome = criterio["nome"]
-        stats = results.get(nome)
+        story.append(Spacer(1, 0.3*cm))
+        story.append(Paragraph(area, subheading))
     
-        if stats is None:
-            story.append(Spacer(1, 0.3*cm))
-            story.append(Paragraph(nome, subheading))
-            story.append(Paragraph(
-                "<b>Erro:</b> Não foram encontrados dados para esta área.",
-                normal
-            ))
-            area_aprovada = False
-            continue
-    
-        if criterio["tipo"] == "máxima":
-            densidade = stats["densidade_maxima"]
-            tipo_txt = "Densidade máxima"
-        else:
+        # Definição dos critérios
+        if area.lower().startswith("área adjacente"):
             densidade = stats["densidade_media"]
+            limite = 50
             tipo_txt = "Densidade média"
+        else:
+            densidade = stats["densidade_maxima"]
+            limite = 5
+            tipo_txt = "Densidade máxima"
     
-        conforme = densidade <= criterio["limite"]
+        conforme = densidade <= limite
     
         if not conforme:
             area_aprovada = False
     
         avaliacoes.append({
-            "area": nome,
+            "area": area,
             "densidade": densidade,
-            "limite": criterio["limite"],
+            "limite": limite,
             "conforme": conforme
         })
     
-        story.append(Spacer(1, 0.3*cm))
-        story.append(Paragraph(nome, subheading))
         story.append(Paragraph(
             f"<b>{tipo_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
-            f"<b>Limite aceitável:</b> {criterio['limite']} hab/km²<br/>"
+            f"<b>Limite aceitável:</b> {limite} hab/km²<br/>"
             f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
             f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
             normal
         ))
+
 
     # =====================================================
     # 5. Avaliação Final da Área Operacional
@@ -256,9 +231,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     
     story.append(Spacer(1, 0.4*cm))
     
-    # Tabela resumo obrigatória
     resumo_data = [
-        ["Área Avaliada", "Densidade Calculada (hab/km²)", "Limite Aceitável (hab/km²)", "Conformidade"]
+        ["Área Avaliada", "Valor Calculado (hab/km²)", "Limite Aceitável (hab/km²)", "Conformidade"]
     ]
     
     for a in avaliacoes:
@@ -278,7 +252,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     ]))
     
     story.append(resumo_table)
-
+    
 
 
     # =====================================================
