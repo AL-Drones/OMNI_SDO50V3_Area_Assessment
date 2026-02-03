@@ -216,17 +216,11 @@ st.markdown("""
         border-color: #E0AB25;
     }
 
-    }
-    
-    /* Fix para o ícone do expander */
+    /* SOLUÇÃO SIMPLES: Esconder ícone/seta do expander */
     .streamlit-expanderHeader svg {
-        fill: #E0AB25 !important;
+        display: none !important;
     }
-    
-    /* Esconder texto do ícone "_arrow_right" */
-    details summary::before {
-        content: none !important;
-    }
+           
     
     details summary {
         list-style: none;
@@ -236,12 +230,6 @@ st.markdown("""
         display: none;
     }
     
-    
-    /* Fix expander icon overlap */
-    .streamlit-expanderHeader p {
-        margin: 0 !important;
-        padding-right: 2rem !important;
-    }
     
     /* Limit image height */
     .stImage img {
