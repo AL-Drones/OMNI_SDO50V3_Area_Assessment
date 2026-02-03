@@ -643,7 +643,7 @@ def main():
                         """, unsafe_allow_html=True)
                         
                         # Check if warning should be shown
-                        if layer_name in ['Geografia de Voo', 'Ground Risk Buffer'] and 0 < densidade <= 5:
+                        if layer_name in ['Flight Geography', 'Ground Risk Buffer'] and 0 < densidade <= 5:
                             show_warning = True
             
             # Show warning if Flight Geography or GRB has density between 0 and 5
