@@ -616,7 +616,7 @@ def main():
                         densidade = stats['densidade_media']
                         density_label = "Média"
                     
-                    if layer_name == 'Área Adjacente':
+                    if layer_name == 'Adjacent Area':
                         threshold = 50
                     else:
                         threshold = 5
