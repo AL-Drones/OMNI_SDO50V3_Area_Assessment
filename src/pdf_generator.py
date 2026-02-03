@@ -93,7 +93,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     )
 
     # =====================================================
-    # COVER
+    # CAPA
     # =====================================================
     story.append(Paragraph("Relatório de Análise de Área", title))
     story.append(Spacer(1, 0.4*cm))
@@ -105,7 +105,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     story.append(Spacer(1, 0.8*cm))
 
     # =====================================================
-    # 1. OBJECTIVE AND REFERENCES
+    # 1. OBJETIVO E REFERÊNCIAS
     # =====================================================
     story.append(Paragraph("1. Objetivo e Referências", heading))
     story.append(Spacer(1, 0.3*cm))
@@ -128,7 +128,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     ))
 
     # =====================================================
-    # 2. OPERATIONAL PARAMETERS
+    # 2. PARÂMETROS OPERACIONAIS
     # =====================================================
     story.append(Spacer(1, 0.4*cm))
     story.append(Paragraph("2. Parâmetros Operacionais", heading))
@@ -150,7 +150,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     story.append(table)
 
     # =====================================================
-    # 3. METHODOLOGY
+    # 3. METODOLOGIA
     # =====================================================
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("3. Metodologia de Análise", heading))
@@ -167,48 +167,55 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     ))
 
     # =====================================================
-    # 4. RESULTS
+    # 4. RESULTADOS
     # =====================================================
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("4. Resultados da Análise", heading))
 
-    area_approved = True
-    approval_notes = []
+    area_aprovada = True
+    notas_nao_conformidade = []
 
-    LIMITS = {
-        "Flight Geography": 5,
-        "Ground Risk Buffer": 5,
-        "Área Adjacente": 50
+    LIMITES = {
+        "Flight Geography": {"tipo": "máxima", "valor": 5},
+        "Ground Risk Buffer": {"tipo": "máxima", "valor": 5},
+        "Área Adjacente": {"tipo": "média", "valor": 50}
     }
 
     for area, stats in results.items():
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
 
-        limit = LIMITS.get(area, None)
+        limite = LIMITES.get(area)
+
+        if limite["tipo"] == "máxima":
+            densidade = stats["densidade_maxima"]
+            criterio_txt = "Densidade máxima"
+        else:
+            densidade = stats["densidade_media"]
+            criterio_txt = "Densidade média"
 
         story.append(Paragraph(
-            f"<b>Densidade máxima calculada:</b> {stats['densidade_maxima']:.2f} hab/km²<br/>"
-            f"<b>Limite aceitável:</b> {limit} hab/km²<br/>"
+            f"<b>{criterio_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
+            f"<b>Limite aceitável:</b> {limite['valor']} hab/km²<br/>"
             f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
             f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
             normal
         ))
 
-        if limit is not None and stats['densidade_maxima'] > limit:
-            area_approved = False
-            approval_notes.append(
-                f"A área <b>{area}</b> excede o limite de densidade populacional permitido."
+        if densidade > limite["valor"]:
+            area_aprovada = False
+            notas_nao_conformidade.append(
+                f"A área <b>{area}</b> excede o limite aceitável de densidade populacional."
             )
 
     # =====================================================
-    # 5. FINAL ASSESSMENT
+    # 5. AVALIAÇÃO FINAL
     # =====================================================
     story.append(Spacer(1, 0.6*cm))
     story.append(Paragraph("5. Avaliação Final da Área Operacional", heading))
     story.append(Spacer(1, 0.4*cm))
 
-    if area_approved:
+    if area_aprovada:
         story.append(Paragraph("ÁREA OPERACIONAL APROVADA", result_ok))
         story.append(Paragraph(
             "A área operacional analisada atende aos critérios de exposição de terceiros "
@@ -223,34 +230,34 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
             "Manual de Operações. As seguintes não conformidades foram identificadas:",
             normal
         ))
-        for note in approval_notes:
+        for nota in notas_nao_conformidade:
             story.append(Spacer(1, 0.2*cm))
-            story.append(Paragraph(f"• {note}", normal))
+            story.append(Paragraph(f"• {nota}", normal))
 
     # =====================================================
-    # 6. MAPS
+    # 6. MAPAS
     # =====================================================
     story.append(PageBreak())
     story.append(Paragraph("6. Mapas de Densidade Populacional", heading))
 
-    map_files = [
+    mapas = [
         ("map_flight_geography.png", "Flight Geography"),
         ("map_ground_risk_buffer.png", "Ground Risk Buffer"),
         ("map_adjacent_area.png", "Área Adjacente")
     ]
 
-    for idx, (file, title_txt) in enumerate(map_files):
-        path = os.path.join(analysis_output_dir, file)
-        if os.path.exists(path):
+    for idx, (arquivo, titulo) in enumerate(mapas):
+        caminho = os.path.join(analysis_output_dir, arquivo)
+        if os.path.exists(caminho):
             story.append(Spacer(1, 0.3*cm))
-            story.append(Paragraph(title_txt, subheading))
+            story.append(Paragraph(titulo, subheading))
             story.append(Spacer(1, 0.3*cm))
 
-            img_data = compress_image(path)
+            img_data = compress_image(caminho)
             img = Image(img_data, width=17*cm, height=12.5*cm)
             story.append(img)
 
-            if idx < len(map_files) - 1:
+            if idx < len(mapas) - 1:
                 story.append(PageBreak())
 
     doc.build(story)
