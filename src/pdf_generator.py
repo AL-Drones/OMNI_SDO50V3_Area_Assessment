@@ -10,6 +10,7 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 from io import BytesIO
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from PIL import Image as PILImage
 import os
 
@@ -130,7 +131,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # Header with logos and title
     story.append(Paragraph("Relatório de Análise de Área de Voo", title_style))
     story.append(Paragraph("RPA: SwissDrones SDO 50 V3", subtitle_style))
-    story.append(Paragraph(f"Data: {datetime.now().strftime('%d/%m/%Y às %H:%M')}", subtitle_style))
+    story.append(Paragraph(f"Data: {datetime.now(ZoneInfo('America/Sao_Paulo')).strftime('%d/%m/%Y às %H:%M')}", subtitle_style))
     story.append(Spacer(1, 0.8*cm))
     
     # Separator line
@@ -486,35 +487,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
             if map_file != maps[-1][0]:
                 story.append(PageBreak())
     
-    # ============================================
-    # Footer
-    # ============================================
-    story.append(PageBreak())
-    story.append(Spacer(1, 3*cm))
-    story.append(Table([['']], colWidths=[16*cm], style=TableStyle([
-        ('LINEABOVE', (0, 0), (-1, 0), 1, colors.grey),
-    ])))
-    story.append(Spacer(1, 0.5*cm))
-    
-    footer_style = ParagraphStyle(
-        'Footer',
-        parent=styles['Normal'],
-        fontSize=9,
-        textColor=colors.grey,
-        alignment=TA_CENTER
-    )
-    
-    story.append(Paragraph("AL Drones - Análise de Área de Voo", footer_style))
-    story.append(Spacer(1, 0.2*cm))
-    story.append(Paragraph("© 2026 AL Drones - Todos os direitos reservados", footer_style))
-    story.append(Spacer(1, 0.2*cm))
-    story.append(Paragraph("www.aldrones.com.br", footer_style))
-    story.append(Spacer(1, 0.5*cm))
-    story.append(Paragraph(
-        f"Este relatório foi gerado automaticamente em {datetime.now().strftime('%d/%m/%Y às %H:%M')}",
-        footer_style
-    ))
-    
+        
     # Build PDF
     doc.build(story)
     buffer.seek(0)
