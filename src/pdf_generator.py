@@ -58,7 +58,7 @@ def generate_pdf_report(
     rpa_name,
     operation_area,
     maps,          # dict: {layer_name: image_path}
-    results        # dict with statistics
+    results,        # dict with statistics
     kml_data = None
 ):
     doc = SimpleDocTemplate(
