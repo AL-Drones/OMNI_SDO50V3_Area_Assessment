@@ -54,13 +54,11 @@ def info_box(text, bg_color, border_color, style):
 # Main PDF generator
 # =====================================================
 def generate_pdf_report(
-    pdf_gen.generate_pdf_report(
-    output_path=pdf_path,
-    rpa_name=rpa_name,
-    operation_area=operation_area,
-    maps=maps,
-    results=results,      # 👈 ESTE estava faltando
-    kml_data=kml_bytes    # opcional
+    results,
+    analysis_output_dir,
+    buffer_info,
+    height,
+    kml_data=None
 ):
     doc = SimpleDocTemplate(
         output_path,
