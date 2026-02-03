@@ -607,10 +607,12 @@ def main():
             
             for idx, (layer_name, stats) in enumerate(results.items()):
                 with cols[idx]:
-                    if layer_name in ['Geografia de Voo', 'Distância de Segurança no Solo']:
+                    # Use densidade_maxima for Flight Geography and Ground Risk Buffer
+                    # Use densidade_media for Adjacent Area
+                    if layer_name in ['Geografia de Voo', 'Ground Risk Buffer']:
                         densidade = stats['densidade_maxima']
                         density_label = "Máx"
-                    else:
+                    else:  # Área Adjacente
                         densidade = stats['densidade_media']
                         density_label = "Média"
                     
@@ -641,7 +643,7 @@ def main():
                         """, unsafe_allow_html=True)
                         
                         # Check if warning should be shown
-                        if layer_name in ['Geografia de Voo', 'Distância de Segurança no Solo'] and 0 < densidade <= 5:
+                        if layer_name in ['Geografia de Voo', 'Ground Risk Buffer'] and 0 < densidade <= 5:
                             show_warning = True
             
             # Show warning if Flight Geography or GRB has density between 0 and 5
