@@ -176,11 +176,11 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     avaliacoes = []
     
     LIMITES = {
-        "Flight Geography": {
+        "Geografia de Voo": {
             "tipo": "máxima",
             "valor": 5
         },
-        "Ground Risk Buffer": {
+        "Distância de Segurança no Solo": {
             "tipo": "máxima",
             "valor": 5
         },
@@ -191,6 +191,10 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     }
     
     for area, stats in results.items():
+    
+        if area not in LIMITES:
+            continue  # segurança extra
+    
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
     
@@ -222,6 +226,7 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     
         if not conforme:
             area_aprovada = False
+
 
 
     # =====================================================
