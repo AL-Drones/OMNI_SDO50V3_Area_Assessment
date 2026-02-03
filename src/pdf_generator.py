@@ -171,29 +171,48 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # =====================================================
     story.append(Spacer(1, 0.5*cm))
     story.append(Paragraph("4. Resultados da Análise", heading))
-
+    
     area_aprovada = True
     notas_nao_conformidade = []
-
+    
     LIMITES = {
         "Flight Geography": {"tipo": "máxima", "valor": 5},
         "Ground Risk Buffer": {"tipo": "máxima", "valor": 5},
         "Área Adjacente": {"tipo": "média", "valor": 50}
     }
-
+    
     for area, stats in results.items():
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
-
+    
         limite = LIMITES.get(area)
-
+    
+        # --- Caso a área não esteja mapeada ---
+        if limite is None:
+            story.append(Paragraph(
+                "<b>Aviso:</b> Não há critério de conformidade definido no Manual "
+                "de Operações para esta área. Os valores abaixo são apresentados "
+                "apenas para fins informativos.",
+                normal
+            ))
+    
+            story.append(Paragraph(
+                f"<b>Densidade média:</b> {stats['densidade_media']:.2f} hab/km²<br/>"
+                f"<b>Densidade máxima:</b> {stats['densidade_maxima']:.2f} hab/km²<br/>"
+                f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
+                f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
+                normal
+            ))
+            continue
+    
+        # --- Áreas com critério definido ---
         if limite["tipo"] == "máxima":
             densidade = stats["densidade_maxima"]
             criterio_txt = "Densidade máxima"
         else:
             densidade = stats["densidade_media"]
             criterio_txt = "Densidade média"
-
+    
         story.append(Paragraph(
             f"<b>{criterio_txt} calculada:</b> {densidade:.2f} hab/km²<br/>"
             f"<b>Limite aceitável:</b> {limite['valor']} hab/km²<br/>"
@@ -201,12 +220,13 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
             f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
             normal
         ))
-
+    
         if densidade > limite["valor"]:
             area_aprovada = False
             notas_nao_conformidade.append(
                 f"A área <b>{area}</b> excede o limite aceitável de densidade populacional."
             )
+
 
     # =====================================================
     # 5. AVALIAÇÃO FINAL
