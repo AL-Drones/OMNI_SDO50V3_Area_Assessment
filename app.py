@@ -444,8 +444,7 @@ def main():
                     )
                 else:
                     fg_size = 0.0
-                    st.info("📍 Geometria detectada: Polígono (Flight Geography já definido)")
-                
+                                    
                 height = st.number_input(
                     "Altura de Voo (m)",
                     min_value=0.0,
@@ -457,7 +456,7 @@ def main():
             with col2:
                 st.markdown("#### Parâmetros de Buffer")
                 cv_size = st.number_input(
-                    "Contingency Volume (m)",
+                    "Volume de Contingência (m)",
                     min_value=215.0,
                     value=215.0,
                     step=10.0,
@@ -467,11 +466,11 @@ def main():
                 # Calculate minimum GRB based on height
                 grb_minimum = gsm.calculate_grb_size(height)
                 grb_size = st.number_input(
-                    "Ground Risk Buffer (m)",
+                    "Distância de Segurança no Solo (m)",
                     min_value=grb_minimum,
                     value=grb_minimum,
                     step=10.0,
-                    help=f"Buffer de risco ao solo (mínimo calculado: {grb_minimum:.2f}m baseado na altura de voo)"
+                    help=f"Distância de segurança no solo (mínimo calculado: {grb_minimum:.2f}m baseado na altura de voo)"
                 )
                 
                 corner_style = st.selectbox(
@@ -479,9 +478,7 @@ def main():
                     options=['square', 'rounded'],
                     index=0,
                     help="Estilo dos cantos dos buffers"
-                )
-            
-            st.info(f"Adjacent Area: 5000m")
+                )  
             
             if st.button("🚀 Iniciar Análise", type="primary"):
                 # Store parameters
@@ -645,7 +642,7 @@ def main():
                     <p style="color: #FFA500; font-size: 1rem; font-weight: 600; margin: 0 0 0.5rem 0;">⚠️ Atenção: Restrições de Sobrevoo</p>
                     <p style="color: #e0e0e0; font-size: 0.9rem; margin: 0; line-height: 1.5;">
                         O voo sobre <strong>não anuentes é proibido</strong>. A trajetória de voo deve estar <strong>completamente contida</strong> 
-                        na Geografia de Voo e <strong>não pode sobrevoar terceiros</strong>.
+                        na Geografia de Voo.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -671,9 +668,9 @@ def main():
             st.markdown("## 🗺️ Mapas de Densidade Populacional")
             
             maps = [
-                ('map_flight_geography.png', 'Flight Geography'),
-                ('map_ground_risk_buffer.png', 'Ground Risk Buffer'),
-                ('map_adjacent_area.png', 'Adjacent Area')
+                ('map_flight_geography.png', 'Geografia de Voo'),
+                ('map_ground_risk_buffer.png', 'Distância de Segurança no Solo'),
+                ('map_adjacent_area.png', 'Área Adjacente')
             ]
             
             for map_file, map_title in maps:
