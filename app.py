@@ -609,7 +609,7 @@ def main():
                 with cols[idx]:
                     # Use densidade_maxima for Flight Geography and Ground Risk Buffer
                     # Use densidade_media for Adjacent Area
-                    if layer_name in ['Geografia de Voo', 'Ground Risk Buffer']:
+                    if layer_name in ['Flight Geography', 'Ground Risk Buffer']:
                         densidade = stats['densidade_maxima']
                         density_label = "Máx"
                     else:  # Área Adjacente
