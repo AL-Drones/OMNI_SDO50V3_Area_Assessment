@@ -658,23 +658,27 @@ def main():
             
             # Detailed statistics table
             st.markdown("---")
-            with st.expander("📋 Estatísticas Detalhadas", expanded=False):
-                import pandas as pd
-                stats_data = []
-                for layer, stat in results.items():
-                    stats_data.append({
-                        'Camada': layer,
-                        'População Total': int(stat['total_pessoas']),
-                        'Área (km²)': round(stat['area_km2'], 2),
-                        'Densidade Média (hab/km²)': round(stat['densidade_media'], 2),
-                        'Densidade Máxima (hab/km²)': round(stat['densidade_maxima'], 2)
-                    })
-                stats_df = pd.DataFrame(stats_data)
-                st.dataframe(stats_df, use_container_width=True, hide_index=True)
+            st.markdown("## 📋 Estatísticas Detalhadas")
             
-            # Display maps
-            st.markdown("---")
-            st.markdown("## 🗺️ Mapas de Densidade Populacional")
+            import pandas as pd
+            
+            stats_data = []
+            for layer, stat in results.items():
+                stats_data.append({
+                    'Camada': layer,
+                    'População Total': int(stat['total_pessoas']),
+                    'Área (km²)': round(stat['area_km2'], 2),
+                    'Densidade Média (hab/km²)': round(stat['densidade_media'], 2),
+                    'Densidade Máxima (hab/km²)': round(stat['densidade_maxima'], 2)
+                })
+            
+            stats_df = pd.DataFrame(stats_data)
+            
+            st.dataframe(
+                stats_df,
+                use_container_width=True,
+                hide_index=True
+            )
             
             maps = [
                 ('map_flight_geography.png', 'Geografia de Voo'),
