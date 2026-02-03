@@ -6,7 +6,7 @@ Aligned with SDO 50 V3 Operations Manual – Area Analysis Section
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from io import BytesIO
@@ -15,7 +15,7 @@ from PIL import Image as PILImage
 import os
 
 
-def compress_image(image_path, max_size=(2000, 1500), quality=90):
+def compress_image(image_path, max_size=(2400, 1800), quality=92):
     img = PILImage.open(image_path)
 
     if img.mode == 'RGBA':
@@ -24,7 +24,13 @@ def compress_image(image_path, max_size=(2000, 1500), quality=90):
     img.thumbnail(max_size, PILImage.Resampling.LANCZOS)
 
     buffer = BytesIO()
-    img.save(buffer, format='JPEG', quality=quality, optimize=True, dpi=(300, 300))
+    img.save(
+        buffer,
+        format='JPEG',
+        quality=quality,
+        optimize=True,
+        dpi=(300, 300)
+    )
     buffer.seek(0)
 
     return buffer
@@ -68,6 +74,22 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
         'Normal', styles['Normal'],
         fontSize=10,
         alignment=TA_JUSTIFY
+    )
+
+    result_ok = ParagraphStyle(
+        'ResultOK', styles['Normal'],
+        fontSize=14,
+        textColor=colors.green,
+        alignment=TA_CENTER,
+        spaceAfter=10
+    )
+
+    result_nok = ParagraphStyle(
+        'ResultNOK', styles['Normal'],
+        fontSize=14,
+        textColor=colors.red,
+        alignment=TA_CENTER,
+        spaceAfter=10
     )
 
     # =====================================================
@@ -122,8 +144,8 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
 
     table = Table(table_data, colWidths=[8*cm, 8*cm])
     table.setStyle(TableStyle([
-        ('GRID', (0,0), (-1,-1), 0.8, colors.grey),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey)
+        ('GRID', (0, 0), (-1, -1), 0.8, colors.grey),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey)
     ]))
     story.append(table)
 
@@ -153,25 +175,30 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     area_approved = True
     approval_notes = []
 
-    # >>>>>> AJUSTE AQUI SE NECESSÁRIO <<<<<<
-    MAX_ALLOWED_DENSITY = 1000  # hab/km² (exemplo)
+    LIMITS = {
+        "Flight Geography": 5,
+        "Ground Risk Buffer": 5,
+        "Área Adjacente": 50
+    }
 
     for area, stats in results.items():
         story.append(Spacer(1, 0.3*cm))
         story.append(Paragraph(area, subheading))
 
+        limit = LIMITS.get(area, None)
+
         story.append(Paragraph(
-            f"Densidade média: {stats['densidade_media']:.2f} hab/km²<br/>"
-            f"Densidade máxima: {stats['densidade_maxima']:.2f} hab/km²<br/>"
-            f"População total: {int(stats['total_pessoas'])} habitantes<br/>"
-            f"Área: {stats['area_km2']:.2f} km²",
+            f"<b>Densidade máxima calculada:</b> {stats['densidade_maxima']:.2f} hab/km²<br/>"
+            f"<b>Limite aceitável:</b> {limit} hab/km²<br/>"
+            f"<b>População total:</b> {int(stats['total_pessoas'])} habitantes<br/>"
+            f"<b>Área analisada:</b> {stats['area_km2']:.2f} km²",
             normal
         ))
 
-        if stats['densidade_maxima'] > MAX_ALLOWED_DENSITY:
+        if limit is not None and stats['densidade_maxima'] > limit:
             area_approved = False
             approval_notes.append(
-                f"A área <b>{area}</b> apresenta densidade máxima superior ao limite aceitável."
+                f"A área <b>{area}</b> excede o limite de densidade populacional permitido."
             )
 
     # =====================================================
@@ -179,21 +206,21 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # =====================================================
     story.append(Spacer(1, 0.6*cm))
     story.append(Paragraph("5. Avaliação Final da Área Operacional", heading))
-    story.append(Spacer(1, 0.3*cm))
+    story.append(Spacer(1, 0.4*cm))
 
     if area_approved:
+        story.append(Paragraph("ÁREA OPERACIONAL APROVADA", result_ok))
         story.append(Paragraph(
-            "<b>Resultado:</b> A área operacional analisada é considerada "
-            "<b>APROVADA</b> para a operação proposta, uma vez que os níveis de "
-            "exposição de terceiros no solo permanecem dentro dos limites "
-            "aceitáveis definidos no Manual de Operações.",
+            "A área operacional analisada atende aos critérios de exposição de terceiros "
+            "no solo definidos no Manual de Operações do SDO 50 V3 e é considerada "
+            "adequada para a operação proposta.",
             normal
         ))
     else:
+        story.append(Paragraph("ÁREA OPERACIONAL NÃO APROVADA", result_nok))
         story.append(Paragraph(
-            "<b>Resultado:</b> A área operacional analisada é considerada "
-            "<b>NÃO APROVADA</b> para a operação proposta. "
-            "Foram identificadas as seguintes não conformidades:",
+            "A área operacional analisada não atende aos critérios estabelecidos no "
+            "Manual de Operações. As seguintes não conformidades foram identificadas:",
             normal
         ))
         for note in approval_notes:
@@ -203,23 +230,28 @@ def generate_pdf_report(results, analysis_output_dir, buffer_info, height, kml_d
     # =====================================================
     # 6. MAPS
     # =====================================================
-    story.append(Spacer(1, 0.6*cm))
+    story.append(PageBreak())
     story.append(Paragraph("6. Mapas de Densidade Populacional", heading))
 
     map_files = [
-        ("map_flight_geography.png", "Geografia de Voo"),
-        ("map_ground_risk_buffer.png", "Distância de Segurança no Solo"),
+        ("map_flight_geography.png", "Flight Geography"),
+        ("map_ground_risk_buffer.png", "Ground Risk Buffer"),
         ("map_adjacent_area.png", "Área Adjacente")
     ]
 
-    for file, title_txt in map_files:
+    for idx, (file, title_txt) in enumerate(map_files):
         path = os.path.join(analysis_output_dir, file)
         if os.path.exists(path):
-            story.append(Spacer(1, 0.4*cm))
+            story.append(Spacer(1, 0.3*cm))
             story.append(Paragraph(title_txt, subheading))
+            story.append(Spacer(1, 0.3*cm))
+
             img_data = compress_image(path)
-            img = Image(img_data, width=17*cm, height=12*cm)
+            img = Image(img_data, width=17*cm, height=12.5*cm)
             story.append(img)
+
+            if idx < len(map_files) - 1:
+                story.append(PageBreak())
 
     doc.build(story)
     buffer.seek(0)
