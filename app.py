@@ -26,14 +26,7 @@ st.set_page_config(
 # Custom CSS with AL Drones branding
 st.markdown("""
 <style>
-    /* Import Segoe UI Emoji font */
-    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI+Emoji&display=swap');
-    
-    /* Apply font globally */
-    * {
-        font-family: 'Segoe UI Emoji', -apple-system, BlinkMacSystemFont, sans-serif !important;
-    }
-    
+        
     /* Hide Streamlit header elements */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
