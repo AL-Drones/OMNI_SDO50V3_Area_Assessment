@@ -414,7 +414,6 @@ def processar_todas_grades(area_geom, titulo, layers_poligonos, layers_para_most
             edgecolor='black',
             boxstyle='round,pad=0.8'
         ),
-        family='Segoe UI'
     )
     
     # Improve grid
